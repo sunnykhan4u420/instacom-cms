@@ -7,8 +7,44 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
+  <script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "1b97bd19-7be6-4917-b406-06e9d2ab7948",
+    serviceWorkerPath: "OneSignalSDKWorker.js",
+    serviceWorkerParam: { scope: "/instacom-cms/" },
+    notifyButton: {
+      enable: true,
+      size: 'medium',
+      position: 'bottom-right',
+      showCredit: false,
+      text: {
+        'tip.state.unsubscribed': 'Notifications enable karein',
+        'tip.state.subscribed': 'Notifications enable hain'
+      }
+    },
+    promptOptions: {
+      slidedown: {
+        prompts: [{
+          type: "push",
+          autoPrompt: true,
+          text: {
+            actionMessage: "Important updates ke liye notifications enable karein",
+            acceptButton: "Allow",
+            cancelButton: "Nahi"
+          },
+          delay: { pageViews: 1, timeDelay: 3 }
+        }]
+      }
+    }
+  });
+
+  OneSignal.Notifications.addEventListener('foregroundWillDisplay', function(ev){
+    // foreground handler
+  });
+});
+</script>
       appId: "1b97bd19-7be6-4917-b406-06e9d2ab7948",
       serviceWorkerPath: "OneSignalSDKWorker.js",
       serviceWorkerParam: { scope: "/instacom-cms/" },
