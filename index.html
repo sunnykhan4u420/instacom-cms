@@ -4,15 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Instacom CMS</title>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "1b97bd19-7be6-4917-b406-06e9d2ab7948",
-      serviceWorkerParam: { scope: "/" },
-      notifyButton: { enable: false },
-    });
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXyvmEDirJPR6J6w6DPH6JNcErMl8qe30",
+    authDomain: "instacom-f2f03.firebaseapp.com",
+    databaseURL: "https://instacom-f2f03-default-rtdb.firebaseio.com",
+    projectId: "instacom-f2f03",
+    storageBucket: "instacom-f2f03.firebasestorage.app",
+    messagingSenderId: "19895187400",
+    appId: "1:19895187400:web:e0c4f787665ac317fb72fd",
+    measurementId: "G-0E5H8V5323"
+  };
+
+  const VAPID_KEY = 'BBy5bNt5vsUA-cdWpmcDRrffE9yvJOOTsxPll4z7zbfFgv6OIOv2H-WOZQGQI5pZ_U5pa_hpzgoj6OdPdJu24U4';
+  const FB_TOKENS = 'https://instacom-f2f03-default-rtdb.firebaseio.com/fcm_tokens';
+  const FK = 'AIzaSyCXyvmEDirJPR6J6w6DPH6JNcErMl8qe30';
+
+  const app = initializeApp(firebaseConfig);
+  const messaging = getMessaging(app);
+
+  window._fcmMessaging = messaging;
+  window._fcmVapid = VAPID_KEY;
+  window._fbTokens = FB_TOKENS;
+  window._fbKey = FK;
+
+  // Foreground message handler
+  onMessage(messaging, (payload) => {
+    const t = payload.notification?.title || 'Instacom';
+    const b = payload.notification?.body || '';
+    if(window.showToast) showToast(t, b, t.includes('Resolved'));
   });
 </script>
 <style>
@@ -262,10 +285,9 @@ function doL(){
   if(!u){document.getElementById('lerr').textContent='Wrong password.';return;}
   cu=u;lsSession(cu.id);askNotif();startApp();
 }
-function startApp(){lsLoad();rMain();startPoll();registerOSPlayer();fbLoadFirst();}
+function startApp(){lsLoad();rMain();startPoll();fbLoadFirst();setTimeout(registerFCM,2500);}
 
 async function fbLoadFirst(){
-  // Firebase se turant data load karo — localStorage pe rely mat karo
   try{
     const arr=await fbGet();
     if(arr&&arr.length){
@@ -279,53 +301,56 @@ async function fbLoadFirst(){
   }catch(e){setSbar('off','Offline — internet check karein');}
 }
 
-// ── ONESIGNAL PLAYER REGISTRATION ──
-const OS_APP_ID='1b97bd19-7be6-4917-b406-06e9d2ab7948';
-const OS_API_KEY='os_v2_app_dol32gl34zerpnaga3u5fk3zjda3kyyozqpee2mpggxwrs4bt6wcirrbo6tnqgjfihzuysexoyq3hp2f5ufuoc2j4e4efpe4c7jtzvy';
-const FB_OS='https://instacom-f2f03-default-rtdb.firebaseio.com/os_players';
-
-async function registerOSPlayer(){
+// ── FCM PUSH NOTIFICATIONS ──
+async function registerFCM(){
   try{
-    await new Promise(r=>setTimeout(r,2000));
-    if(!window.OneSignal)return;
-    const pid=await OneSignal.User.PushSubscription.id;
-    if(!pid||!cu)return;
-    // Save player ID under user id in Firebase
-    await fetch(FB_OS+'/'+cu.id+'.json?auth='+FK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({playerId:pid,name:cu.name,userId:cu.id,ts:Date.now()})});
-  }catch(e){console.log('OS reg err',e);}
+    if(!window._fcmMessaging)return;
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted')return;
+    const token = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js')
+      .then(m=>m.getToken(window._fcmMessaging,{vapidKey:window._fcmVapid}));
+    if(!token||!cu)return;
+    await fetch(window._fbTokens+'/'+cu.id+'.json?auth='+window._fbKey,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token,name:cu.name,userId:cu.id,ts:Date.now()})
+    });
+  }catch(e){console.log('FCM reg err',e);}
 }
 
-async function getOtherPlayerIds(){
+async function getOtherFCMTokens(){
   try{
-    const r=await fetch(FB_OS+'.json?auth='+FK);
+    const r=await fetch(window._fbTokens+'.json?auth='+window._fbKey);
     const d=await r.json();
     if(!d)return[];
-    return Object.values(d).filter(x=>x.userId!==cu.id).map(x=>x.playerId).filter(Boolean);
+    return Object.values(d).filter(x=>x.userId!==cu.id).map(x=>x.token).filter(Boolean);
   }catch(e){return[];}
 }
 
 const notifSentIds=new Set();
 
 async function sendOSNotif(title,msg,guardId=''){
-  // Agar same complaint pe pehle se notification gayi hai toh dobara mat bhejo
   if(guardId&&notifSentIds.has(guardId))return;
   if(guardId)notifSentIds.add(guardId);
   try{
-    const ids=await getOtherPlayerIds();
-    if(!ids.length)return;
-    await fetch('https://onesignal.com/api/v1/notifications',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Basic '+OS_API_KEY},
-      body:JSON.stringify({
-        app_id:OS_APP_ID,
-        include_subscription_ids:ids,
-        headings:{en:title},
-        contents:{en:msg},
-        small_icon:'ic_stat_onesignal_default',
-        android_accent_color:'FF2236',
-      })
-    });
-  }catch(e){console.log('OS notif err',e);}
+    const tokens=await getOtherFCMTokens();
+    if(!tokens.length)return;
+    // FCM HTTP v1 — send via Firebase REST
+    for(const token of tokens){
+      await fetch('https://fcm.googleapis.com/fcm/send',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'key='+window._fbKey
+        },
+        body:JSON.stringify({
+          to:token,
+          notification:{title,body:msg},
+          data:{title,body:msg}
+        })
+      });
+    }
+  }catch(e){console.log('FCM send err',e);}
 }
 function logout(){stopPoll();cu=null;lsSession(null);rLogin();}
 
