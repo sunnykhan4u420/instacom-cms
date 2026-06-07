@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Instacom CMS</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "1b97bd19-7be6-4917-b406-06e9d2ab7948",
+      serviceWorkerParam: { scope: "/" },
+      notifyButton: { enable: false },
+    });
+  });
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f5e8ea;font-family:'Segoe UI',sans-serif}
@@ -131,6 +142,11 @@ body{background:#f5e8ea;font-family:'Segoe UI',sans-serif}
 .mcan{height:34px;padding:0 14px;font-size:13px;border-radius:8px;border:1.5px solid #d09098;background:#fff;color:#8b4050;cursor:pointer}
 .msav{height:34px;padding:0 16px;font-size:13px;border-radius:8px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:5px}
 .alck{display:flex;align-items:center;gap:6px;font-size:13px;color:#b07080;background:#fdf5f5;border:1.5px solid #d09098;border-radius:8px;padding:7px 11px;height:37px}
+/* SEEN BY */
+.seen-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px;font-size:10px;color:#b07080}
+.seen-lbl{font-weight:700;color:#8b4050;font-size:10px}
+.seen-chip{background:#f0e8ea;border:1px solid #e0c0c8;border-radius:10px;padding:2px 7px;font-size:10px;color:#6b3040;display:inline-flex;align-items:center;gap:3px}
+.unseen-chip{background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:2px 7px;font-size:10px;color:#856404;display:inline-flex;align-items:center;gap:3px}
 @media(max-width:600px){
 .hdr{padding:10px 12px}.stats{gap:5px}.stat{min-width:48px;padding:5px 8px}.sn{font-size:16px}
 .toolbar{padding:8px 10px;gap:6px}.srch{min-width:100%;height:38px}.fsel2{min-width:100%}
@@ -246,7 +262,51 @@ function doL(){
   if(!u){document.getElementById('lerr').textContent='Wrong password.';return;}
   cu=u;lsSession(cu.id);askNotif();startApp();
 }
-function startApp(){lsLoad();rMain();startPoll();}
+function startApp(){lsLoad();rMain();startPoll();registerOSPlayer();}
+
+// ── ONESIGNAL PLAYER REGISTRATION ──
+const OS_APP_ID='1b97bd19-7be6-4917-b406-06e9d2ab7948';
+const OS_API_KEY='os_v2_app_dol32gl34zerpnaga3u5fk3zjda3kyyozqpee2mpggxwrs4bt6wcirrbo6tnqgjfihzuysexoyq3hp2f5ufuoc2j4e4efpe4c7jtzvy';
+const FB_OS='https://instacom-f2f03-default-rtdb.firebaseio.com/os_players';
+
+async function registerOSPlayer(){
+  try{
+    await new Promise(r=>setTimeout(r,2000));
+    if(!window.OneSignal)return;
+    const pid=await OneSignal.User.PushSubscription.id;
+    if(!pid||!cu)return;
+    // Save player ID under user id in Firebase
+    await fetch(FB_OS+'/'+cu.id+'.json?auth='+FK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({playerId:pid,name:cu.name,userId:cu.id,ts:Date.now()})});
+  }catch(e){console.log('OS reg err',e);}
+}
+
+async function getOtherPlayerIds(){
+  try{
+    const r=await fetch(FB_OS+'.json?auth='+FK);
+    const d=await r.json();
+    if(!d)return[];
+    return Object.values(d).filter(x=>x.userId!==cu.id).map(x=>x.playerId).filter(Boolean);
+  }catch(e){return[];}
+}
+
+async function sendOSNotif(title,msg){
+  try{
+    const ids=await getOtherPlayerIds();
+    if(!ids.length)return;
+    await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic '+OS_API_KEY},
+      body:JSON.stringify({
+        app_id:OS_APP_ID,
+        include_subscription_ids:ids,
+        headings:{en:title},
+        contents:{en:msg},
+        small_icon:'ic_stat_onesignal_default',
+        android_accent_color:'FF2236',
+      })
+    });
+  }catch(e){console.log('OS notif err',e);}
+}
 function logout(){stopPoll();cu=null;lsSession(null);rLogin();}
 
 function rMain(){
@@ -376,6 +436,37 @@ function renderList(){
     grp[dk].forEach(c=>{html+=renderCard(c,false);});
   });
   el.innerHTML=html;
+
+  // Mark all visible complaints as seen by current user
+  setTimeout(()=>{ LL.forEach(c=>markSeen(c)); },500);
+}
+
+// ── SEEN BY FEATURE ──
+// Sirf Boss (boss) aur Sunny (m1) ko seen list dikhe
+const SEEN_VIEWERS=['boss','m1'];
+
+function markSeen(c){
+  if(!cu||!c)return;
+  if(!c.seenBy)c.seenBy={};
+  if(!c.seenBy[cu.id]){
+    c.seenBy[cu.id]={name:cu.name,ts:Date.now()};
+    saveC();
+  }
+}
+
+function renderSeenRow(c){
+  // Sirf boss aur m1 ko dikhe
+  if(!cu||!SEEN_VIEWERS.includes(cu.id))return '';
+  const allMembers=USERS.filter(u=>u.id!==c.by.replace&&true); // sab users
+  const seenBy=c.seenBy||{};
+  const seenNames=USERS.filter(u=>seenBy[u.id]).map(u=>u.name);
+  const notSeen=USERS.filter(u=>!seenBy[u.id]&&u.id!==cu.id).map(u=>u.name);
+  if(seenNames.length===0&&notSeen.length===0)return '';
+  return `<div class="seen-row">
+    <span class="seen-lbl">&#128065;</span>
+    ${seenNames.map(n=>`<span class="seen-chip">&#10003; ${n}</span>`).join('')}
+    ${notSeen.map(n=>`<span class="unseen-chip">&#8987; ${n}</span>`).join('')}
+  </div>`;
 }
 
 function renderCard(c,inDrawer){
@@ -404,6 +495,7 @@ function renderCard(c,inDrawer){
       <span class="cid">#${c.id.slice(-5).toUpperCase()}</span>
       ${(cu&&cu.id==='m1'&&c.status==='resolved')?`<span style="cursor:pointer;opacity:0.01;user-select:none;font-size:10px" onclick="editResolveTime('${c.id}')" title="">&#8203;</span>`:''}
     </div>
+    ${renderSeenRow(c)}
     <div class="ca">
       ${c.status==='pending'?`<button class="bs bsr" onclick="resolve('${c.id}')">&#10003; Resolve</button>`:''}
       ${sR?`<button class="bs brp" onclick="reopen('${c.id}')">&#8635; Reopen</button>`:''}
@@ -492,12 +584,14 @@ function sv(){
     Object.assign(c,{name,phone,addr,type:document.getElementById('ft').value,priority:document.getElementById('fpr').value,desc:document.getElementById('fd').value.trim()});
     if(ib)c.agent=agent;
   }else{
-    C.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name,phone,addr,type:document.getElementById('ft').value,priority:document.getElementById('fpr').value,agent,desc:document.getElementById('fd').value.trim(),status:'pending',ts:Date.now(),rAt:null,by:cu.name,rBy:null,rByName:null,dateKey:todayKey(),comments:[]});
+    const ctype=document.getElementById('ft').value;
+    C.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name,phone,addr,type:ctype,priority:document.getElementById('fpr').value,agent,desc:document.getElementById('fd').value.trim(),status:'pending',ts:Date.now(),rAt:null,by:cu.name,rBy:null,rByName:null,dateKey:todayKey(),comments:[]});
+    sendOSNotif('🔴 Nai Complaint — '+ctype, name+' | '+addr+'\nBy: '+cu.name);
   }
   saveC();document.getElementById('modal').style.display='none';mo=false;renderList();updateFab();
 }
 
-function resolve(id){const c=C.find(x=>x.id===id);if(c){c.status='resolved';c.rAt=Date.now();c.rBy=cu.id;c.rByName=cu.name;saveC();renderList();updateFab();}}
+function resolve(id){const c=C.find(x=>x.id===id);if(c){c.status='resolved';c.rAt=Date.now();c.rBy=cu.id;c.rByName=cu.name;saveC();renderList();updateFab();sendOSNotif('✅ Complaint Resolved — '+c.type, c.name+' | '+c.addr+'\nBy: '+cu.name);}}
 function reopen(id){
   const c=C.find(x=>x.id===id);if(!c)return;
   if(cu.role!=='boss'&&c.rBy!==cu.id){alert('Sirf Boss ya resolve karne wala reopen kar sakta hai.');return;}
