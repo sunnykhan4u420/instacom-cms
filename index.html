@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Instacom CMS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f5e8ea;font-family:'Segoe UI',sans-serif}
+#app{color:#1a0003;min-height:100vh}
+.hdr{background:linear-gradient(90deg,#0d0001 0%,#5a0008 35%,#b80016 70%,#e8001f 100%);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:3px solid #ff2236;box-shadow:0 4px 20px rgba(200,0,26,.5)}
+.hdr-l{display:flex;align-items:center;gap:13px}
+.logo-img{width:48px;height:48px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.6);box-shadow:0 3px 12px rgba(0,0,0,.5);flex-shrink:0}
+.logo-txt{color:#fff;font-size:16px;font-weight:700}
+.logo-sub{color:rgba(255,220,220,.75);font-size:11px;margin-top:2px}
+.hdr-r{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.stats{display:flex;gap:7px}
+.stat{background:linear-gradient(135deg,rgba(0,0,0,.4),rgba(80,0,10,.3));border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:6px 13px;text-align:center;min-width:60px}
+.sn{font-size:20px;font-weight:700;line-height:1;color:#fff}
+.sl{font-size:9px;color:rgba(255,200,200,.6);margin-top:1px;text-transform:uppercase;letter-spacing:.6px}
+.rbadge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-weight:500}
+.rbadge.boss{background:rgba(255,215,0,.2);border-color:rgba(255,215,0,.5);color:#ffd700}
+.obtn{height:30px;padding:0 11px;font-size:12px;border-radius:7px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:rgba(255,255,255,.9);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.obtn:hover{background:rgba(0,0,0,.55)}
+.sbar{background:rgba(0,0,0,.25);padding:4px 18px;font-size:11px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:6px}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.sdot.on{background:#22a855;box-shadow:0 0 5px #22a855}
+.sdot.off{background:#ff6060;box-shadow:0 0 5px #ff6060}
+.sdot.spin{background:#ffaa00;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.toolbar{background:linear-gradient(180deg,#f0d8db,#f7ecee);border-bottom:2px solid #e0b0b4;padding:10px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srch{flex:1;min-width:130px;height:36px;border-radius:8px;border:1.5px solid #d09098;background:#fff;color:#1a0003;font-size:13px;padding:0 12px;outline:none}
+.srch:focus{border-color:#c8001a}
+.fsel2{height:36px;border-radius:8px;border:1.5px solid #d09098;background:#fff;color:#1a0003;font-size:13px;padding:0 10px;outline:none;cursor:pointer}
+.addbtn{height:36px;padding:0 14px;font-size:13px;font-weight:700;border-radius:8px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 3px 10px rgba(200,0,26,.5)}
+/* DATE GROUP HEADER on main list */
+.day-sep{background:linear-gradient(135deg,#fff0f0,#fff5f5);border:1px solid #f0c8cc;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;color:#8b3040;letter-spacing:.4px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.day-sep.today{background:linear-gradient(135deg,#fff0f0,#ffeaea);border-color:#ffb0b8;color:#c8001a}
+/* FAB */
+.hist-fab{position:fixed;bottom:22px;right:22px;z-index:500;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1a0003,#6b0010);color:#fff;border:2px solid #ff4040;box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s}
+.hist-fab:hover{transform:scale(1.1)}
+.hbadge{position:absolute;top:-4px;right:-4px;background:#22a855;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:20px;text-align:center}
+/* DRAWER */
+.drawer-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:600;display:none}
+.drawer{position:fixed;bottom:0;left:0;right:0;height:88vh;background:#fdf5f5;border-radius:18px 18px 0 0;z-index:601;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s ease;box-shadow:0 -4px 30px rgba(0,0,0,.2)}
+.drawer.open{transform:translateY(0)}
+.drawer-hdr{background:linear-gradient(90deg,#0d0001,#6b0010,#c8001a);color:#fff;padding:14px 18px;border-radius:18px 18px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-title{font-size:15px;font-weight:700}
+.drawer-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.drawer-ctrl{padding:10px 16px;background:#f0d8db;border-bottom:1.5px solid #e0b0b4;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.drawer-body{overflow-y:auto;padding:12px 16px;flex:1}
+.date-group{margin-bottom:14px}
+.date-hdr{font-size:12px;font-weight:700;color:#8b3040;background:linear-gradient(135deg,#f0d8db,#f7ecee);padding:7px 14px;border-radius:8px;margin-bottom:6px;border-left:3px solid #c8001a}
+/* CARDS */
+.lst{padding:12px 18px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,#f5e8ea,#fdf0f2);min-height:200px;padding-bottom:80px}
+.cc{background:linear-gradient(135deg,#fff,#fff8f8);border-radius:12px;border:1.5px solid #f0d0d4;padding:13px 15px;box-shadow:0 3px 12px rgba(200,0,26,.08)}
+.cc.pending{border-top:3px solid #c8001a}
+.cc.resolved{border-top:3px solid #22a855;background:linear-gradient(135deg,#f5fff8,#fff)}
+.cc.type-new{border-left:4px solid #0066cc;background:linear-gradient(135deg,#f0f7ff,#fff)!important}
+.cc.type-cable{border-left:4px solid #e67e00;background:linear-gradient(135deg,#fff8f0,#fff)!important}
+.ct{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cn{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px;font-weight:700;color:#1a0003}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot.r{background:#c8001a;box-shadow:0 0 6px rgba(200,0,26,.6)}
+.dot.g{background:#22a855;box-shadow:0 0 6px rgba(34,168,85,.6)}
+.bdg{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:2px}
+.bpend{background:linear-gradient(135deg,#ffe0e4,#ffeaec);color:#8b0010;border:1px solid #ffb0b8}
+.bres{background:linear-gradient(135deg,#d8f5e8,#e8faf0);color:#0a5a28;border:1px solid #99e6b3}
+.bty-new{background:linear-gradient(135deg,#ddeeff,#e8f4ff);color:#004499;border:1px solid #99ccff;font-weight:700}
+.bty-cable{background:linear-gradient(135deg,#fff0d8,#fff5e8);color:#7a4000;border:1px solid #ffcc88}
+.bty-normal{background:linear-gradient(135deg,#f5e8ea,#fdf5f5);color:#8b4050;border:1px solid #f0d0d4}
+.cbody{margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
+.ir{display:flex;align-items:center;gap:6px;font-size:12px;color:#8b4050}
+.iv{color:#1a0003;font-weight:600}
+.iph{color:#c8001a;text-decoration:none;font-weight:600}
+.cdesc{margin-top:7px;font-size:12px;color:#8b4050;background:#fdf0f2;border-radius:8px;padding:7px 11px;border-left:3px solid #e0a0a8}
+.cmeta{font-size:10px;color:#b07080;margin-top:7px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cid{font-family:monospace;background:#fdf5f5;padding:2px 6px;border-radius:4px;border:1px solid #f0d0d4;color:#8b4050}
+.resolve-by{font-size:11px;color:#0a5a28;font-weight:600;background:#e8faf0;padding:2px 8px;border-radius:10px;border:1px solid #99e6b3}
+.ca{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.bs{height:29px;padding:0 10px;font-size:12px;border-radius:7px;border:1.5px solid;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-weight:500}
+.bsr{background:linear-gradient(135deg,#d8f5e8,#e8faf0);color:#0a5a28;border-color:#99e6b3}
+.brp{background:linear-gradient(135deg,#ffe0e4,#fff0f0);color:#8b0010;border-color:#ffb0b8}
+.bed{background:#fff;color:#8b4050;border-color:#d8b0b8}.bed:hover{border-color:#c8001a;color:#c8001a}
+.bdel{background:#fff;color:#b07080;border-color:#d8b0b8}.bdel:hover{border-color:#c8001a;color:#c8001a}
+.bcmt{background:linear-gradient(135deg,#e8f0ff,#f0f4ff);color:#1a3a8b;border-color:#b0c8ff}
+/* COMMENTS */
+.cmt-sec{margin-top:10px;border-top:1.5px dashed #f0c8cc;padding-top:8px}
+.cmt-title{font-size:11px;font-weight:700;color:#8b3040;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.cmt-item{background:#fff;border:1px solid #f0d0d4;border-radius:8px;padding:7px 10px;margin-bottom:5px}
+.cmt-who{font-weight:700;color:#c8001a;font-size:11px}
+.cmt-time{color:#b07080;font-size:10px;margin-left:6px}
+.cmt-text{color:#1a0003;font-size:12px;margin-top:3px;line-height:1.4}
+.cmt-row{display:flex;gap:6px;margin-top:6px}
+.cmt-inp{flex:1;border:1.5px solid #d09098;border-radius:7px;padding:6px 10px;font-size:12px;outline:none;background:#fdf5f5;color:#1a0003}
+.cmt-inp:focus{border-color:#c8001a}
+.cmt-send{height:32px;padding:0 12px;font-size:12px;border-radius:7px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;font-weight:600}
+.empty{text-align:center;padding:44px 20px;color:#c8a0a8;font-size:14px}
+/* TOAST */
+.tw{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.ti{background:linear-gradient(135deg,#1a0003,#5a0008);color:#fff;padding:11px 15px;border-radius:11px;border-left:4px solid #ff4444;box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:13px;max-width:280px;animation:sIn .3s ease}
+.ti.g{border-left-color:#22a855}
+.ti-t{font-weight:700;font-size:11px;color:#ffaaaa;margin-bottom:2px}
+.ti.g .ti-t{color:#99e6b3}
+@keyframes sIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+/* LOGIN */
+.lw{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d0001 0%,#5a0008 40%,#b80016 75%,#e8001f 100%);padding:20px}
+.lbox{background:linear-gradient(160deg,#fff,#fff8f8);border-radius:18px;padding:30px 28px;width:min(310px,96%);box-shadow:0 16px 50px rgba(0,0,0,.5)}
+.ll{text-align:center;margin-bottom:18px}
+.ll img{width:82px;height:82px;border-radius:18px;object-fit:cover;border:3px solid #f0c8cc;box-shadow:0 6px 20px rgba(200,0,26,.3)}
+.ltitle{font-size:18px;font-weight:800;color:#1a0003;margin-top:10px}
+.lsub{font-size:12px;color:#8b4050;margin-top:2px}
+.llbl{font-size:11px;color:#8b4050;display:block;margin-bottom:4px;margin-top:14px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.li{width:100%;background:#fdf5f5;border:1.5px solid #d09098;border-radius:9px;color:#1a0003;font-size:14px;padding:9px 12px;outline:none;height:40px}
+.li:focus{border-color:#c8001a}
+.lsel{width:100%;background:#fdf5f5;border:1.5px solid #d09098;border-radius:9px;color:#1a0003;font-size:14px;padding:0 11px;height:40px;outline:none;cursor:pointer}
+.lerr{font-size:12px;color:#c8001a;margin-top:7px;text-align:center;min-height:16px;font-weight:500}
+.lbtn{width:100%;margin-top:14px;height:44px;font-size:15px;font-weight:800;border-radius:10px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 14px rgba(200,0,26,.5)}
+/* MODAL */
+.mw{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:14px 8px;z-index:800;overflow-y:auto}
+.mbox{background:linear-gradient(160deg,#fff,#fff8f8);border-radius:14px;border:1.5px solid #f0c8cc;padding:22px;width:min(470px,98%);box-shadow:0 10px 40px rgba(0,0,0,.2);margin:auto}
+.mbox h3{font-size:15px;font-weight:700;color:#1a0003;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #f0d0d4}
+.fr{margin-bottom:10px}
+.fr label{font-size:11px;color:#8b4050;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.fi{width:100%;background:#fdf5f5;border:1.5px solid #d09098;border-radius:8px;color:#1a0003;font-size:13px;padding:8px 12px;outline:none;height:37px}
+.fi:focus{border-color:#c8001a}
+.fs{width:100%;background:#fdf5f5;border:1.5px solid #d09098;border-radius:8px;color:#1a0003;font-size:13px;padding:0 11px;height:37px;outline:none;cursor:pointer}
+.fta{width:100%;background:#fdf5f5;border:1.5px solid #d09098;border-radius:8px;color:#1a0003;font-size:13px;padding:8px 12px;outline:none;resize:vertical;min-height:65px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mft{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.mcan{height:34px;padding:0 14px;font-size:13px;border-radius:8px;border:1.5px solid #d09098;background:#fff;color:#8b4050;cursor:pointer}
+.msav{height:34px;padding:0 16px;font-size:13px;border-radius:8px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.alck{display:flex;align-items:center;gap:6px;font-size:13px;color:#b07080;background:#fdf5f5;border:1.5px solid #d09098;border-radius:8px;padding:7px 11px;height:37px}
+@media(max-width:600px){
+.hdr{padding:10px 12px}.stats{gap:5px}.stat{min-width:48px;padding:5px 8px}.sn{font-size:16px}
+.toolbar{padding:8px 10px;gap:6px}.srch{min-width:100%;height:38px}.fsel2{min-width:100%}
+.addbtn{width:100%;height:40px;justify-content:center}.lst{padding:10px 10px 80px}
+.cc{padding:10px}.cbody{grid-template-columns:1fr}.fg{grid-template-columns:1fr}
+.mbox{padding:15px}.lbox{padding:22px 16px}
+}
+</style>
+</head>
+<body>
+<div id="app" style="min-height:100vh"></div>
+<div class="tw" id="toast"></div>
+<script>
+const FB='https://instacom-f2f03-default-rtdb.firebaseio.com/complaints';
+const FK='AIzaSyCXyvmEDirJPR6J6w6DPH6JNcErMl8qe30';
+async function fbGet(){const r=await fetch(FB+'.json?auth='+FK);if(!r.ok)throw new Error(r.status);const v=await r.json();return v?Object.values(v):[];}
+async function fbSet(arr){const o={};arr.forEach(c=>{o[c.id]=c;});await fetch(FB+'.json?auth='+FK,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});}
+
+const LOGO='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';
+
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dateLabel(k){if(!k)return '';const[y,m,d]=k.split('-');const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return d+' '+mn[parseInt(m)-1]+' '+y;}
+function monthName(ym){const[y,m]=ym.split('-');const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mn[parseInt(m)-1]+' '+y;}
+
+// ── MAIN SCREEN LOGIC ──
+// Show: ALL complaints where dateKey === today (both pending & resolved)
+//     + ALL complaints where status === 'pending' (any date, not resolved yet)
+// History: resolved complaints where dateKey < today
+function isMainVisible(c){
+  const tk=todayKey();
+  if(c.dateKey===tk) return true;          // aaj ki — sab dikhao
+  if(c.status==='pending') return true;     // kisi bhi din ki pending — dikhao
+  return false;                             // purani resolved — history mein
+}
+
+const CTYPES=[
+  {val:'New Connection',     cat:'connection',badge:'bty-new'},
+  {val:'Slow Speed Issue',   cat:'complaint', badge:'bty-normal'},
+  {val:'Redlight Issue',     cat:'complaint', badge:'bty-normal'},
+  {val:'Fiber Signal Issue', cat:'complaint', badge:'bty-normal'},
+  {val:'No Internet Issue',  cat:'complaint', badge:'bty-normal'},
+  {val:'Router Issue',       cat:'complaint', badge:'bty-normal'},
+  {val:'Connection Shifting',cat:'cable',     badge:'bty-cable'},
+  {val:'TV Cable Fault',     cat:'cable',     badge:'bty-cable'},
+];
+function getTI(v){return CTYPES.find(t=>t.val===v)||{badge:'bty-normal',cat:'complaint'};}
+function cardCls(c){const t=getTI(c.type);let s='cc '+c.status;if(t.cat==='connection')s+=' type-new';else if(t.cat==='cable')s+=' type-cable';return s;}
+
+const USERS=[
+  {id:'boss', name:'Boss',   role:'boss',   pass:'boss4422',  canAdd:true},
+  {id:'m1',   name:'Sunny',  role:'member', pass:'sunny420',  canAdd:true},
+  {id:'m2',   name:'Zafar',  role:'member', pass:'zafar123',  canAdd:false},
+  {id:'m3',   name:'Rashid', role:'member', pass:'rashid123', canAdd:false},
+  {id:'m4',   name:'Fasih',  role:'member', pass:'fasih123',  canAdd:false},
+  {id:'m5',   name:'Ramzan', role:'member', pass:'ramzan123', canAdd:false},
+];
+
+let cu=null,C=[],srchQ='',fltSt='all',hFilter='',hMonth='',eid=null,mo=false,pollTmr=null,lastHash='',seenIds=new Set(),drawerOpen=false;
+
+function lsSave(){try{localStorage.setItem('ic9',JSON.stringify(C));}catch(e){}}
+function lsLoad(){try{const d=localStorage.getItem('ic9');if(d){const p=JSON.parse(d);if(Array.isArray(p)){C=p;seenIds=new Set(C.map(x=>x.id));}}}catch(e){}}
+function lsSession(id){try{if(id)localStorage.setItem('ic9s',id);else localStorage.removeItem('ic9s');}catch(e){}}
+function lsGetSession(){try{return localStorage.getItem('ic9s');}catch(e){return null;}}
+
+function showToast(title,msg,g=false){
+  const t=document.getElementById('toast'),d=document.createElement('div');
+  d.className='ti'+(g?' g':'');d.innerHTML='<div class="ti-t">'+title+'</div>'+msg;
+  t.appendChild(d);
+  if(window.Notification&&Notification.permission==='granted')new Notification('Instacom — '+title,{body:msg});
+  setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .3s';setTimeout(()=>d.remove(),300);},5000);
+}
+function askNotif(){if(window.Notification&&Notification.permission==='default')Notification.requestPermission();}
+function setSbar(cls,msg){const b=document.getElementById('sbar');if(b)b.innerHTML='<span class="sdot '+cls+'"></span> '+msg;}
+
+async function saveC(){lsSave();try{await fbSet(C);setSbar('on','Live sync &#9679; sab members connected');}catch(e){setSbar('off','Offline — data locally saved');}}
+
+async function fbPoll(){
+  if(mo||drawerOpen)return;
+  try{
+    const arr=await fbGet();arr.sort((a,b)=>a.ts-b.ts);
+    const h=JSON.stringify(arr);
+    if(h!==lastHash){
+      const nw=arr.filter(c=>!seenIds.has(c.id));
+      nw.forEach(c=>{if(cu&&c.by!==cu.name)showToast('&#128276; New Complaint!',c.name+' — '+c.type+' ('+c.by+')');});
+      const pr=new Set(C.filter(c=>c.status==='resolved').map(c=>c.id));
+      arr.filter(c=>c.status==='resolved'&&!pr.has(c.id)).forEach(c=>{if(cu&&c.rByName!==cu.name)showToast('&#9989; Resolved!',c.name+' — by '+c.rByName,true);});
+      lastHash=h;C=arr;lsSave();seenIds=new Set(C.map(x=>x.id));
+      renderList();updateFab();
+    }
+    setSbar('on','Live sync &#9679; sab members connected');
+  }catch(e){setSbar('off','Offline — internet check karein');}
+}
+function startPoll(){if(pollTmr)clearInterval(pollTmr);fbPoll();pollTmr=setInterval(fbPoll,4000);}
+function stopPoll(){if(pollTmr){clearInterval(pollTmr);pollTmr=null;}}
+
+function rLogin(){
+  stopPoll();
+  document.getElementById('app').innerHTML=`
+  <div class="lw"><div class="lbox">
+    <div class="ll"><img src="data:image/jpeg;base64,${LOGO}" alt="Instacom">
+      <div class="ltitle">Instacom Internet</div><div class="lsub">Complaint Management System</div>
+    </div>
+    <label class="llbl">Select user</label>
+    <select class="lsel" id="lu">${USERS.map(u=>`<option value="${u.id}">${u.name}${u.role==='boss'?' — Boss':''}</option>`).join('')}</select>
+    <label class="llbl">Password</label>
+    <input class="li" type="password" id="lp" placeholder="Enter password" onkeydown="if(event.key==='Enter')doL()">
+    <div class="lerr" id="lerr"></div>
+    <button class="lbtn" onclick="doL()">&#128275; Login</button>
+  </div></div>`;
+}
+function doL(){
+  const uid=document.getElementById('lu').value,pw=document.getElementById('lp').value,u=USERS.find(x=>x.id===uid&&x.pass===pw);
+  if(!u){document.getElementById('lerr').textContent='Wrong password.';return;}
+  cu=u;lsSession(cu.id);askNotif();startApp();
+}
+function startApp(){lsLoad();rMain();startPoll();}
+function logout(){stopPoll();cu=null;lsSession(null);rLogin();}
+
+function rMain(){
+  const ib=cu.role==='boss';
+  document.getElementById('app').innerHTML=`
+  <div class="hdr">
+    <div class="hdr-l">
+      <img class="logo-img" src="data:image/jpeg;base64,${LOGO}" alt="Instacom">
+      <div><div class="logo-txt">Instacom Internet</div><div class="logo-sub">Complaint Management</div></div>
+    </div>
+    <div class="hdr-r">
+      <div class="stats">
+        <div class="stat"><div class="sn" id="st">0</div><div class="sl">Total</div></div>
+        <div class="stat"><div class="sn" id="sp" style="color:#ff8090">0</div><div class="sl">Pending</div></div>
+        <div class="stat"><div class="sn" id="sr" style="color:#6ee8a0">0</div><div class="sl">Resolved</div></div>
+      </div>
+      <span class="rbadge ${ib?'boss':''}">&#128081; ${cu.name}</span>
+      <button class="obtn" onclick="logout()">&#128682; Logout</button>
+    </div>
+  </div>
+  <div class="sbar" id="sbar"><span class="sdot spin"></span> Connecting...</div>
+  <div class="toolbar">
+    <input class="srch" type="text" id="srch" placeholder="&#128269; Search..." oninput="srchQ=this.value;renderList()">
+    <select class="fsel2" onchange="fltSt=this.value;renderList()">
+      <option value="all">All</option>
+      <option value="pending">&#9888; Pending only</option>
+      <option value="resolved">&#10003; Resolved only</option>
+    </select>
+    ${cu.canAdd?`<button class="addbtn" onclick="oAdd()">+ Add Complaint</button>`:''}
+  </div>
+  <div class="lst" id="list"></div>
+  <div class="drawer-bg" id="dbg" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-hdr">
+      <span class="drawer-title">&#128218; Resolved History</span>
+      <button class="drawer-close" onclick="closeDrawer()">&#10005;</button>
+    </div>
+    <div class="drawer-ctrl">
+      <input class="srch" style="flex:1;min-width:100px" placeholder="&#128269; Search..." oninput="hFilter=this.value;renderDrawer()">
+      <select class="fsel2" onchange="hMonth=this.value;renderDrawer()">
+        <option value="">All months</option>
+      </select>
+    </div>
+    <div class="drawer-body" id="drawer-body">Loading...</div>
+  </div>
+  <div class="hist-fab" id="fab" onclick="openDrawer()">
+    &#128218;<span class="hbadge" id="hbadge" style="display:none">0</span>
+  </div>
+  <div id="modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:800"></div>`;
+  renderList();updateFab();
+}
+
+function updateFab(){
+  const b=document.getElementById('hbadge');if(!b)return;
+  const tk=todayKey();
+  const cnt=C.filter(c=>c.status==='resolved'&&c.dateKey!==tk).length;
+  if(cnt>0){b.textContent=cnt;b.style.display='block';}else b.style.display='none';
+}
+
+function openDrawer(){
+  drawerOpen=true;
+  document.getElementById('dbg').style.display='block';
+  document.getElementById('drawer').classList.add('open');
+  // populate month filter
+  const tk=todayKey();
+  const months=[...new Set(C.filter(c=>c.status==='resolved'&&c.dateKey&&c.dateKey!==tk).map(c=>c.dateKey.slice(0,7)))].sort((a,b)=>b.localeCompare(a));
+  const sel=document.querySelector('#drawer .fsel2');
+  if(sel)sel.innerHTML='<option value="">All months</option>'+months.map(m=>`<option value="${m}"${hMonth===m?' selected':''}>${monthName(m)}</option>`).join('');
+  renderDrawer();
+}
+function closeDrawer(){drawerOpen=false;document.getElementById('dbg').style.display='none';document.getElementById('drawer').classList.remove('open');}
+
+function renderDrawer(){
+  const tk=todayKey();
+  // History = resolved complaints from PREVIOUS dates only
+  let hist=C.filter(c=>c.status==='resolved'&&c.dateKey&&c.dateKey!==tk);
+  if(hFilter)hist=hist.filter(c=>(c.name+c.addr+c.phone+(c.desc||'')+(c.type||'')).toLowerCase().includes(hFilter.toLowerCase()));
+  if(hMonth)hist=hist.filter(c=>c.dateKey.startsWith(hMonth));
+  hist.sort((a,b)=>b.ts-a.ts);
+  const grp={};hist.forEach(c=>{const k=c.dateKey;if(!grp[k])grp[k]=[];grp[k].push(c);});
+  const dates=Object.keys(grp).sort((a,b)=>b.localeCompare(a));
+  const body=document.getElementById('drawer-body');if(!body)return;
+  if(!dates.length){body.innerHTML='<div class="empty">History empty hai — purani resolved complaints yahan aayengi</div>';return;}
+  body.innerHTML=dates.map(dk=>`
+    <div class="date-group">
+      <div class="date-hdr">&#128197; ${dateLabel(dk)} &nbsp;&mdash;&nbsp; ${grp[dk].length} resolved</div>
+      ${grp[dk].map(c=>renderCard(c,true)).join('')}
+    </div>`).join('');
+}
+
+function renderList(){
+  const tk=todayKey();
+  let LL=C.filter(c=>isMainVisible(c));
+  if(fltSt==='pending')LL=LL.filter(c=>c.status==='pending');
+  else if(fltSt==='resolved')LL=LL.filter(c=>c.status==='resolved');
+  if(srchQ)LL=LL.filter(c=>(c.name+c.addr+c.phone+(c.desc||'')+(c.type||'')).toLowerCase().includes(srchQ.toLowerCase()));
+
+  // Sort: pending first, then by date desc
+  LL.sort((a,b)=>{
+    if(a.status!==b.status)return a.status==='pending'?-1:1;
+    return b.ts-a.ts;
+  });
+
+  // Stats — all complaints
+  const allMain=C.filter(c=>isMainVisible(c));
+  const se=document.getElementById('st');
+  if(se){
+    se.textContent=allMain.length;
+    document.getElementById('sp').textContent=allMain.filter(c=>c.status==='pending').length;
+    document.getElementById('sr').textContent=allMain.filter(c=>c.status==='resolved').length;
+  }
+  const el=document.getElementById('list');if(!el)return;
+  if(!LL.length){el.innerHTML='<div class="empty">Koi complaint nahi</div>';return;}
+
+  // Group by date for display
+  const grp={};
+  LL.forEach(c=>{const k=c.dateKey||tk;if(!grp[k])grp[k]=[];grp[k].push(c);});
+  const dates=Object.keys(grp).sort((a,b)=>b.localeCompare(a));
+
+  let html='';
+  dates.forEach(dk=>{
+    const isToday=dk===tk;
+    const label=isToday?`&#128197; Today — ${dateLabel(dk)}`:`&#9888; Pending from ${dateLabel(dk)}`;
+    if(dates.length>1||!isToday){
+      html+=`<div class="day-sep ${isToday?'today':''}">${label}</div>`;
+    }
+    grp[dk].forEach(c=>{html+=renderCard(c,false);});
+  });
+  el.innerHTML=html;
+}
+
+function renderCard(c,inDrawer){
+  const ib=cu&&cu.role==='boss';
+  const d=new Date(c.ts),ds=d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}),ts=d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  const ti=getTI(c.type);
+  const sR=c.status==='resolved'&&(ib||c.rBy===cu.id);
+  const canDel=ib||c.by===cu.name;
+  const cmts=c.comments||[];
+  return `<div class="${cardCls(c)}" style="margin-bottom:8px">
+    <div class="ct"><div class="cn">
+      <span class="dot ${c.status==='resolved'?'g':'r'}"></span>${c.name}
+      <span class="bdg ${c.status==='resolved'?'bres':'bpend'}">${c.status==='resolved'?'&#10003; Resolved':'&#9888; Pending'}</span>
+      <span class="bdg ${ti.badge}">${c.type}</span>
+    </div></div>
+    <div class="cbody">
+      <div class="ir"><span style="color:#c8001a">&#128205;</span><span class="iv">${c.addr}</span></div>
+      <div class="ir"><span style="color:#22a855">&#128222;</span><a class="iph" href="tel:${c.phone}">${c.phone}</a></div>
+      ${c.agent?`<div class="ir"><span style="color:#0066cc">&#128100;</span><span>Assigned: <span class="iv">${c.agent}</span></span></div>`:''}
+      ${c.by?`<div class="ir"><span style="color:#b07080">&#9998;</span><span>By: <b>${c.by}</b></span></div>`:''}
+    </div>
+    ${c.desc?`<div class="cdesc">${c.desc}</div>`:''}
+    <div class="cmeta">
+      <span>&#128197; ${ds} at ${ts}</span>
+      ${c.rAt?`<span class="resolve-by">&#10003; Resolved by ${c.rByName||'Team'} &mdash; ${new Date(c.rAt).toLocaleDateString('en-PK',{day:'2-digit',month:'short'})}</span>`:''}
+      <span class="cid">#${c.id.slice(-5).toUpperCase()}</span>
+      ${(cu&&cu.id==='m1'&&c.status==='resolved')?`<span style="cursor:pointer;opacity:0.01;user-select:none;font-size:10px" onclick="editResolveTime('${c.id}')" title="">&#8203;</span>`:''}
+    </div>
+    <div class="ca">
+      ${c.status==='pending'?`<button class="bs bsr" onclick="resolve('${c.id}')">&#10003; Resolve</button>`:''}
+      ${sR?`<button class="bs brp" onclick="reopen('${c.id}')">&#8635; Reopen</button>`:''}
+      ${!inDrawer?`<button class="bs bed" onclick="editC('${c.id}')">&#9998; Edit</button>`:''}
+      ${canDel?`<button class="bs bdel" onclick="delC('${c.id}','${inDrawer}')">&#128465; Delete</button>`:''}
+      <button class="bs bcmt" id="cmt-btn-${c.id}" onclick="toggleCmt('${c.id}')">&#128172; ${cmts.length>0?`(${cmts.length})`:'Comment'}</button>
+    </div>
+    <div class="cmt-sec" id="cmt-${c.id}" style="display:none">
+      <div class="cmt-title">&#128172; Comments</div>
+      <div id="cmt-list-${c.id}">${cmts.length===0?'<div style="font-size:12px;color:#b07080;margin-bottom:5px">Abhi koi comment nahi</div>':cmts.map(cm=>`<div class="cmt-item"><span class="cmt-who">${cm.by}</span><span class="cmt-time">${new Date(cm.ts).toLocaleDateString('en-PK',{day:'2-digit',month:'short'})} ${new Date(cm.ts).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</span><div class="cmt-text">${cm.text}</div></div>`).join('')}</div>
+      <div class="cmt-row">
+        <input class="cmt-inp" id="cinp-${c.id}" placeholder="Comment likho..." onkeydown="if(event.key==='Enter')addCmt('${c.id}')">
+        <button class="cmt-send" onclick="addCmt('${c.id}')">Send &#9993;</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCmt(id){const el=document.getElementById('cmt-'+id);if(!el)return;const show=el.style.display==='none';el.style.display=show?'block':'none';if(show){const i=document.getElementById('cinp-'+id);if(i)i.focus();}}
+
+function addCmt(id){
+  const inp=document.getElementById('cinp-'+id);if(!inp)return;
+  const text=inp.value.trim();if(!text)return;
+  const c=C.find(x=>x.id===id);if(!c)return;
+  if(!c.comments)c.comments=[];
+  c.comments.push({by:cu.name,ts:Date.now(),text});
+  saveC();inp.value='';
+  const lst=document.getElementById('cmt-list-'+id);
+  if(lst)lst.innerHTML=c.comments.map(cm=>`<div class="cmt-item"><span class="cmt-who">${cm.by}</span><span class="cmt-time">${new Date(cm.ts).toLocaleDateString('en-PK',{day:'2-digit',month:'short'})} ${new Date(cm.ts).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</span><div class="cmt-text">${cm.text}</div></div>`).join('');
+  const btn=document.getElementById('cmt-btn-'+id);
+  if(btn)btn.innerHTML='&#128172; ('+c.comments.length+')';
+}
+
+function oAdd(){eid=null;sModal('New Complaint',{name:'',phone:'',addr:'',type:'New Connection',priority:'Medium',agent:'',desc:''});}
+function editC(id){const c=C.find(x=>x.id===id);if(!c)return;eid=id;sModal('Edit Complaint',c);}
+
+function buildTO(sel){
+  const g=[
+    {label:'CONNECTION',t:CTYPES.filter(x=>x.cat==='connection')},
+    {label:'COMPLAINTS', t:CTYPES.filter(x=>x.cat==='complaint')},
+    {label:'CABLE / SHIFTING',t:CTYPES.filter(x=>x.cat==='cable')},
+  ];
+  return g.map(x=>`<optgroup label="${x.label}">${x.t.map(t=>`<option value="${t.val}"${sel===t.val?' selected':''}>${t.val}</option>`).join('')}</optgroup>`).join('');
+}
+
+function sModal(title,c){
+  const ib=cu.role==='boss',members=USERS.filter(u=>u.role==='member');
+  const af=ib
+    ?`<select class="fs" id="fa"><option value="">-- Not assigned --</option><option value="All Team"${c.agent==='All Team'?' selected':''}>&#128101; All Team Members</option>${members.map(u=>`<option value="${u.name}"${c.agent===u.name?' selected':''}>${u.name}</option>`).join('')}</select>`
+    :`<div class="alck">&#128274; ${c.agent||'Not assigned'}<span style="margin-left:auto;font-size:10px;color:#c0a0a8">(Boss only)</span></div>`;
+  mo=true;
+  const m=document.getElementById('modal');m.style.display='block';
+  m.innerHTML=`<div class="mw" onclick="cM(event)"><div class="mbox" onclick="event.stopPropagation()">
+    <h3>&#128221; ${title}</h3>
+    <div class="fg">
+      <div class="fr"><label>Customer name *</label><input class="fi" id="fn" placeholder="Ali Hassan" value="${c.name||''}"></div>
+      <div class="fr"><label>Contact number *</label><input class="fi" id="fp" placeholder="03001234567" value="${c.phone||''}"></div>
+    </div>
+    <div class="fr"><label>Address *</label><input class="fi" id="fa2" placeholder="House #, Street, Area" value="${c.addr||''}"></div>
+    <div class="fg">
+      <div class="fr"><label>Complaint type</label><select class="fs" id="ft">${buildTO(c.type)}</select></div>
+      <div class="fr"><label>Priority</label>
+        <select class="fs" id="fpr">
+          <option value="High"${c.priority==='High'?' selected':''}>&#128308; High</option>
+          <option value="Medium"${(!c.priority||c.priority==='Medium')?' selected':''}>&#127833; Medium</option>
+          <option value="Low"${c.priority==='Low'?' selected':''}>&#128309; Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr"><label>Assign to member</label>${af}</div>
+    <div class="fr"><label>Description</label><textarea class="fta" id="fd">${c.desc||''}</textarea></div>
+    <div class="mft">
+      <button class="mcan" onclick="cM()">Cancel</button>
+      <button class="msav" onclick="sv()">&#10003; Save Complaint</button>
+    </div>
+  </div></div>`;
+}
+function cM(e){if(!e||e.target.classList.contains('mw')){document.getElementById('modal').style.display='none';mo=false;}}
+
+function sv(){
+  const name=document.getElementById('fn').value.trim(),phone=document.getElementById('fp').value.trim(),addr=document.getElementById('fa2').value.trim();
+  if(!name||!phone||!addr){alert('Name, phone aur address required hain.');return;}
+  const ib=cu.role==='boss',ae=document.getElementById('fa'),agent=ib&&ae&&ae.tagName==='SELECT'?ae.value:(eid?C.find(x=>x.id===eid)?.agent||'':'');
+  if(eid){
+    const c=C.find(x=>x.id===eid);
+    Object.assign(c,{name,phone,addr,type:document.getElementById('ft').value,priority:document.getElementById('fpr').value,desc:document.getElementById('fd').value.trim()});
+    if(ib)c.agent=agent;
+  }else{
+    C.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name,phone,addr,type:document.getElementById('ft').value,priority:document.getElementById('fpr').value,agent,desc:document.getElementById('fd').value.trim(),status:'pending',ts:Date.now(),rAt:null,by:cu.name,rBy:null,rByName:null,dateKey:todayKey(),comments:[]});
+  }
+  saveC();document.getElementById('modal').style.display='none';mo=false;renderList();updateFab();
+}
+
+function resolve(id){const c=C.find(x=>x.id===id);if(c){c.status='resolved';c.rAt=Date.now();c.rBy=cu.id;c.rByName=cu.name;saveC();renderList();updateFab();}}
+function reopen(id){
+  const c=C.find(x=>x.id===id);if(!c)return;
+  if(cu.role!=='boss'&&c.rBy!==cu.id){alert('Sirf Boss ya resolve karne wala reopen kar sakta hai.');return;}
+  c.status='pending';c.rAt=null;c.rBy=null;c.rByName=null;saveC();renderList();updateFab();
+}
+function delC(id,inDrawer){
+  if(!confirm('Delete karein?'))return;
+  C=C.filter(x=>x.id!==id);saveC();renderList();updateFab();
+  if(inDrawer==='true')renderDrawer();
+}
+
+(function(){
+  const sid=lsGetSession();
+  if(sid){const u=USERS.find(x=>x.id===sid);if(u){cu=u;askNotif();startApp();return;}}
+  rLogin();
+})();
+
+function editResolveTime(id){
+  const c=C.find(x=>x.id===id);if(!c||!c.rAt)return;
+  const cur=new Date(c.rAt);
+  const hh=String(cur.getHours()).padStart(2,'0');
+  const mm=String(cur.getMinutes()).padStart(2,'0');
+  const dateStr=cur.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'});
+  
+  // Create secret modal
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML=`
+    <div style="background:#fff;border-radius:14px;padding:22px;width:min(300px,96%);box-shadow:0 10px 40px rgba(0,0,0,.3)">
+      <div style="font-size:14px;font-weight:700;color:#1a0003;margin-bottom:4px">&#9200; Resolve time edit karo</div>
+      <div style="font-size:11px;color:#8b4050;margin-bottom:16px">${c.name} — ${dateStr}</div>
+      <label style="font-size:11px;color:#8b4050;text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:block;margin-bottom:5px">New time</label>
+      <input type="time" id="new-rtime" value="${hh}:${mm}" style="width:100%;height:42px;border:1.5px solid #d09098;border-radius:8px;font-size:16px;padding:0 12px;outline:none;background:#fdf5f5;color:#1a0003">
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+        <button onclick="this.closest('div').parentElement.parentElement.remove()" style="height:34px;padding:0 14px;border-radius:8px;border:1.5px solid #d09098;background:#fff;color:#8b4050;cursor:pointer;font-size:13px">Cancel</button>
+        <button onclick="applyResolveTime('${id}',this)" style="height:34px;padding:0 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#c8001a,#8b0010);color:#fff;cursor:pointer;font-size:13px;font-weight:700">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  setTimeout(()=>document.getElementById('new-rtime')&&document.getElementById('new-rtime').focus(),100);
+}
+
+function applyResolveTime(id,btn){
+  const inp=document.getElementById('new-rtime');if(!inp)return;
+  const [hh,mm]=inp.value.split(':').map(Number);
+  const c=C.find(x=>x.id===id);if(!c)return;
+  const d=new Date(c.rAt);
+  d.setHours(hh,mm,0,0);
+  c.rAt=d.getTime();
+  saveC();
+  btn.closest('div').parentElement.parentElement.remove();
+  renderList();
+  if(drawerOpen)renderDrawer();
+}
+</script>
+</body>
+</html>
