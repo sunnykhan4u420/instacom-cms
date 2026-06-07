@@ -262,7 +262,22 @@ function doL(){
   if(!u){document.getElementById('lerr').textContent='Wrong password.';return;}
   cu=u;lsSession(cu.id);askNotif();startApp();
 }
-function startApp(){lsLoad();rMain();startPoll();registerOSPlayer();}
+function startApp(){lsLoad();rMain();startPoll();registerOSPlayer();fbLoadFirst();}
+
+async function fbLoadFirst(){
+  // Firebase se turant data load karo — localStorage pe rely mat karo
+  try{
+    const arr=await fbGet();
+    if(arr&&arr.length){
+      arr.sort((a,b)=>a.ts-b.ts);
+      lastHash=JSON.stringify(arr);
+      C=arr;lsSave();
+      seenIds=new Set(C.map(x=>x.id));
+      renderList();updateFab();
+      setSbar('on','Live sync &#9679; sab members connected');
+    }
+  }catch(e){setSbar('off','Offline — internet check karein');}
+}
 
 // ── ONESIGNAL PLAYER REGISTRATION ──
 const OS_APP_ID='1b97bd19-7be6-4917-b406-06e9d2ab7948';
@@ -289,7 +304,12 @@ async function getOtherPlayerIds(){
   }catch(e){return[];}
 }
 
-async function sendOSNotif(title,msg){
+const notifSentIds=new Set();
+
+async function sendOSNotif(title,msg,guardId=''){
+  // Agar same complaint pe pehle se notification gayi hai toh dobara mat bhejo
+  if(guardId&&notifSentIds.has(guardId))return;
+  if(guardId)notifSentIds.add(guardId);
   try{
     const ids=await getOtherPlayerIds();
     if(!ids.length)return;
@@ -585,13 +605,14 @@ function sv(){
     if(ib)c.agent=agent;
   }else{
     const ctype=document.getElementById('ft').value;
-    C.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,5),name,phone,addr,type:ctype,priority:document.getElementById('fpr').value,agent,desc:document.getElementById('fd').value.trim(),status:'pending',ts:Date.now(),rAt:null,by:cu.name,rBy:null,rByName:null,dateKey:todayKey(),comments:[]});
-    sendOSNotif('🔴 Nai Complaint — '+ctype, name+' | '+addr+'\nBy: '+cu.name);
+    const newId='c'+Date.now()+Math.random().toString(36).slice(2,5);
+    C.push({id:newId,name,phone,addr,type:ctype,priority:document.getElementById('fpr').value,agent,desc:document.getElementById('fd').value.trim(),status:'pending',ts:Date.now(),rAt:null,by:cu.name,rBy:null,rByName:null,dateKey:todayKey(),comments:[]});
+    sendOSNotif('🔴 Nai Complaint — '+ctype, name+' | '+addr+'\nBy: '+cu.name, 'add-'+newId);
   }
   saveC();document.getElementById('modal').style.display='none';mo=false;renderList();updateFab();
 }
 
-function resolve(id){const c=C.find(x=>x.id===id);if(c){c.status='resolved';c.rAt=Date.now();c.rBy=cu.id;c.rByName=cu.name;saveC();renderList();updateFab();sendOSNotif('✅ Complaint Resolved — '+c.type, c.name+' | '+c.addr+'\nBy: '+cu.name);}}
+function resolve(id){const c=C.find(x=>x.id===id);if(c){c.status='resolved';c.rAt=Date.now();c.rBy=cu.id;c.rByName=cu.name;saveC();renderList();updateFab();sendOSNotif('✅ Complaint Resolved — '+c.type, c.name+' | '+c.addr+'\nBy: '+cu.name,'resolve-'+id);}}
 function reopen(id){
   const c=C.find(x=>x.id===id);if(!c)return;
   if(cu.role!=='boss'&&c.rBy!==cu.id){alert('Sirf Boss ya resolve karne wala reopen kar sakta hai.');return;}
