@@ -335,7 +335,6 @@ async function registerOneSignal(){
   window.OneSignalDeferred.push(async function(OneSignal){
     try{
       // Permission prompt (browser native)
-      const perm = await OneSignal.Notifications.requestPermission();
       if(!perm) return;
       // Identify user + tag (so we can exclude sender)
       await OneSignal.login(String(cu.id));
