@@ -4,38 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Instacom CMS</title>
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCXyvmEDirJPR6J6w6DPH6JNcErMl8qe30",
-    authDomain: "instacom-f2f03.firebaseapp.com",
-    databaseURL: "https://instacom-f2f03-default-rtdb.firebaseio.com",
-    projectId: "instacom-f2f03",
-    storageBucket: "instacom-f2f03.firebasestorage.app",
-    messagingSenderId: "19895187400",
-    appId: "1:19895187400:web:e0c4f787665ac317fb72fd",
-    measurementId: "G-0E5H8V5323"
-  };
-
-  const VAPID_KEY = 'BBy5bNt5vsUA-cdWpmcDRrffE9yvJOOTsxPll4z7zbfFgv6OIOv2H-WOZQGQI5pZ_U5pa_hpzgoj6OdPdJu24U4';
-  const FB_TOKENS = 'https://instacom-f2f03-default-rtdb.firebaseio.com/fcm_tokens';
-  const FK = 'AIzaSyCXyvmEDirJPR6J6w6DPH6JNcErMl8qe30';
-
-  const app = initializeApp(firebaseConfig);
-  const messaging = getMessaging(app);
-
-  window._fcmMessaging = messaging;
-  window._fcmVapid = VAPID_KEY;
-  window._fbTokens = FB_TOKENS;
-  window._fbKey = FK;
-
-  // Foreground message handler
-  onMessage(messaging, (payload) => {
-    const t = payload.notification?.title || 'Instacom';
-    const b = payload.notification?.body || '';
-    if(window.showToast) showToast(t, b, t.includes('Resolved'));
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "1b97bd19-7be6-4917-b406-06e9d2ab7948",
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/instacom-cms/" },
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true
+    });
+    // Foreground notification -> in-app toast (jab app khuli ho)
+    OneSignal.Notifications.addEventListener('foregroundWillDisplay', function(ev){
+      try{
+        const n = ev.notification || {};
+        const title = n.title || 'Instacom';
+        const body  = n.body  || '';
+        if(window.showToast) window.showToast(title, body, title.indexOf('Resolved')>-1);
+      }catch(e){}
+    });
+    window._osReady = true;
   });
 </script>
 <style>
@@ -285,7 +274,7 @@ function doL(){
   if(!u){document.getElementById('lerr').textContent='Wrong password.';return;}
   cu=u;lsSession(cu.id);askNotif();startApp();
 }
-function startApp(){lsLoad();rMain();startPoll();fbLoadFirst();setTimeout(registerFCM,2500);}
+function startApp(){lsLoad();rMain();startPoll();fbLoadFirst();setTimeout(registerOneSignal,2500);}
 
 async function fbLoadFirst(){
   try{
@@ -301,57 +290,49 @@ async function fbLoadFirst(){
   }catch(e){setSbar('off','Offline — internet check karein');}
 }
 
-// ── FCM PUSH NOTIFICATIONS ──
-async function registerFCM(){
-  try{
-    if(!window._fcmMessaging)return;
-    const perm = await Notification.requestPermission();
-    if(perm!=='granted')return;
-    const token = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js')
-      .then(m=>m.getToken(window._fcmMessaging,{vapidKey:window._fcmVapid}));
-    if(!token||!cu)return;
-    await fetch(window._fbTokens+'/'+cu.id+'.json?auth='+window._fbKey,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({token,name:cu.name,userId:cu.id,ts:Date.now()})
-    });
-  }catch(e){console.log('FCM reg err',e);}
-}
+// ── ONESIGNAL PUSH NOTIFICATIONS ──
+const ONESIGNAL_APP_ID  = '1b97bd19-7be6-4917-b406-06e9d2ab7948';
+const ONESIGNAL_REST_KEY= 'os_v2_app_dol32gl34zerpnaga3u5fk3zjbu5zec64sdualu7jknxy5ewgscpx3wptssitvr5znwl3tz2biah6uz24bvze4ofsxokqca4tk45knq';
 
-async function getOtherFCMTokens(){
-  try{
-    const r=await fetch(window._fbTokens+'.json?auth='+window._fbKey);
-    const d=await r.json();
-    if(!d)return[];
-    return Object.values(d).filter(x=>x.userId!==cu.id).map(x=>x.token).filter(Boolean);
-  }catch(e){return[];}
+async function registerOneSignal(){
+  if(!window.OneSignalDeferred || !cu) return;
+  window.OneSignalDeferred.push(async function(OneSignal){
+    try{
+      // Permission prompt (browser native)
+      const perm = await OneSignal.Notifications.requestPermission();
+      if(!perm) return;
+      // Identify user + tag (so we can exclude sender)
+      await OneSignal.login(String(cu.id));
+      await OneSignal.User.addTag('user_id', String(cu.id));
+      await OneSignal.User.addTag('user_name', cu.name);
+    }catch(e){ console.log('OneSignal reg err', e); }
+  });
 }
 
 const notifSentIds=new Set();
-
 async function sendOSNotif(title,msg,guardId=''){
   if(guardId&&notifSentIds.has(guardId))return;
   if(guardId)notifSentIds.add(guardId);
   try{
-    const tokens=await getOtherFCMTokens();
-    if(!tokens.length)return;
-    // FCM HTTP v1 — send via Firebase REST
-    for(const token of tokens){
-      await fetch('https://fcm.googleapis.com/fcm/send',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'key='+window._fbKey
-        },
-        body:JSON.stringify({
-          to:token,
-          notification:{title,body:msg},
-          data:{title,body:msg}
-        })
-      });
-    }
-  }catch(e){console.log('FCM send err',e);}
+    const body={
+      app_id: ONESIGNAL_APP_ID,
+      headings:{en:title},
+      contents:{en:msg},
+      included_segments:['Subscribed Users'],
+      // Sender ko khud notification na jaye
+      filters: cu ? [{field:'tag', key:'user_id', relation:'!=', value:String(cu.id)}] : undefined
+    };
+    await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json; charset=utf-8',
+        'Authorization':'Basic '+ONESIGNAL_REST_KEY
+      },
+      body: JSON.stringify(body)
+    });
+  }catch(e){ console.log('OneSignal send err', e); }
 }
+
 function logout(){stopPoll();cu=null;lsSession(null);rLogin();}
 
 function rMain(){
