@@ -561,7 +561,7 @@ function shareWA(){
   const pending=C.filter(c=>c.status==='pending').length;
   const resolved=C.filter(c=>c.status==='resolved'&&c.dateKey===todayKey()).length;
   const msg='\uD83D\uDD14 *Instacom App Update*\n\nApp mein complaints update ho gayi hain.\n\u2022 Pending: '+pending+'\n\u2022 Aaj Resolved: '+resolved+'\n\nApp khol kar check karein.\n\n_Instacom CMS_';
-  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(msg),'_blank');
 }
 
 function oAdd(){eid=null;sModal('New Complaint',{name:'',phone:'',addr:'',type:'New Connection',priority:'Medium',agent:'',desc:''});}
