@@ -107,6 +107,7 @@ body{background:#f5e8ea;font-family:'Segoe UI',sans-serif}
 .bed{background:#fff;color:#8b4050;border-color:#d8b0b8}.bed:hover{border-color:#c8001a;color:#c8001a}
 .bdel{background:#fff;color:#b07080;border-color:#d8b0b8}.bdel:hover{border-color:#c8001a;color:#c8001a}
 .bcmt{background:linear-gradient(135deg,#e8f0ff,#f0f4ff);color:#1a3a8b;border-color:#b0c8ff}
+.bwa{background:#e8fdf2;color:#075e54;border-color:#25d366}
 /* COMMENTS */
 .cmt-sec{margin-top:10px;border-top:1.5px dashed #f0c8cc;padding-top:8px}
 .cmt-title{font-size:11px;font-weight:700;color:#8b3040;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
@@ -528,6 +529,7 @@ function renderCard(c,inDrawer){
       ${!inDrawer?`<button class="bs bed" onclick="editC('${c.id}')">&#9998; Edit</button>`:''}
       ${canDel?`<button class="bs bdel" onclick="delC('${c.id}','${inDrawer}')">&#128465; Delete</button>`:''}
       <button class="bs bcmt" id="cmt-btn-${c.id}" onclick="toggleCmt('${c.id}')">&#128172; ${cmts.length>0?`(${cmts.length})`:'Comment'}</button>
+      <button class="bs bwa" onclick="shareWA()">&#128241; WhatsApp</button>
     </div>
     <div class="cmt-sec" id="cmt-${c.id}" style="display:none">
       <div class="cmt-title">&#128172; Comments</div>
@@ -553,6 +555,13 @@ function addCmt(id){
   if(lst)lst.innerHTML=c.comments.map(cm=>`<div class="cmt-item"><span class="cmt-who">${cm.by}</span><span class="cmt-time">${new Date(cm.ts).toLocaleDateString('en-PK',{day:'2-digit',month:'short'})} ${new Date(cm.ts).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</span><div class="cmt-text">${cm.text}</div></div>`).join('');
   const btn=document.getElementById('cmt-btn-'+id);
   if(btn)btn.innerHTML='&#128172; ('+c.comments.length+')';
+}
+
+function shareWA(){
+  const pending=C.filter(c=>c.status==='pending').length;
+  const resolved=C.filter(c=>c.status==='resolved'&&c.dateKey===todayKey()).length;
+  const msg='\uD83D\uDD14 *Instacom App Update*\n\nApp mein complaints update ho gayi hain.\n\u2022 Pending: '+pending+'\n\u2022 Aaj Resolved: '+resolved+'\n\nApp khol kar check karein.\n\n_Instacom CMS_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
 function oAdd(){eid=null;sModal('New Complaint',{name:'',phone:'',addr:'',type:'New Connection',priority:'Medium',agent:'',desc:''});}
